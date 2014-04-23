@@ -42,6 +42,10 @@ VERSION = [0, 1]
 __all__ = ['hash']
 
 
+class error(Exception):
+    pass
+
+
 def hash(password, salt, N, r, p, dkLen):
     """Returns the result of the scrypt password-based key derivation function.
 
