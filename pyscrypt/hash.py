@@ -49,32 +49,32 @@ def R(X, destination, a1, a2, b):
 
 
 def salsa20_8(B):
-  '''Salsa 20/8 stream cypher; Used by BlockMix. See http://en.wikipedia.org/wiki/Salsa20'''
+    '''Salsa 20/8 stream cypher; Used by BlockMix. See http://en.wikipedia.org/wiki/Salsa20'''
 
-  # Convert the character array into an int32 array
-  B32 = [ make_int32((ord(B[i * 4]) | (ord(B[i * 4 + 1]) << 8) | (ord(B[i * 4 + 2]) << 16) | (ord(B[i * 4 + 3]) << 24))) for i in xrange(0, 16) ]
-  x = [ i for i in B32 ]
+    # Convert the character array into an int32 array
+    B32 = [ make_int32((ord(B[i * 4]) | (ord(B[i * 4 + 1]) << 8) | (ord(B[i * 4 + 2]) << 16) | (ord(B[i * 4 + 3]) << 24))) for i in xrange(0, 16) ]
+    x = [ i for i in B32 ]
 
-  # Salsa... Time to dance.
-  for i in xrange(8, 0, -2):
-      R(x, 4, 0, 12, 7);   R(x, 8, 4, 0, 9);    R(x, 12, 8, 4, 13);   R(x, 0, 12, 8, 18)
-      R(x, 9, 5, 1, 7);    R(x, 13, 9, 5, 9);   R(x, 1, 13, 9, 13);   R(x, 5, 1, 13, 18)
-      R(x, 14, 10, 6, 7);  R(x, 2, 14, 10, 9);  R(x, 6, 2, 14, 13);   R(x, 10, 6, 2, 18)
-      R(x, 3, 15, 11, 7);  R(x, 7, 3, 15, 9);   R(x, 11, 7, 3, 13);   R(x, 15, 11, 7, 18)
-      R(x, 1, 0, 3, 7);    R(x, 2, 1, 0, 9);    R(x, 3, 2, 1, 13);    R(x, 0, 3, 2, 18)
-      R(x, 6, 5, 4, 7);    R(x, 7, 6, 5, 9);    R(x, 4, 7, 6, 13);    R(x, 5, 4, 7, 18)
-      R(x, 11, 10, 9, 7);  R(x, 8, 11, 10, 9);  R(x, 9, 8, 11, 13);   R(x, 10, 9, 8, 18)
-      R(x, 12, 15, 14, 7); R(x, 13, 12, 15, 9); R(x, 14, 13, 12, 13); R(x, 15, 14, 13, 18)
+    # Salsa... Time to dance.
+    for i in xrange(8, 0, -2):
+        R(x, 4, 0, 12, 7);   R(x, 8, 4, 0, 9);    R(x, 12, 8, 4, 13);   R(x, 0, 12, 8, 18)
+        R(x, 9, 5, 1, 7);    R(x, 13, 9, 5, 9);   R(x, 1, 13, 9, 13);   R(x, 5, 1, 13, 18)
+        R(x, 14, 10, 6, 7);  R(x, 2, 14, 10, 9);  R(x, 6, 2, 14, 13);   R(x, 10, 6, 2, 18)
+        R(x, 3, 15, 11, 7);  R(x, 7, 3, 15, 9);   R(x, 11, 7, 3, 13);   R(x, 15, 11, 7, 18)
+        R(x, 1, 0, 3, 7);    R(x, 2, 1, 0, 9);    R(x, 3, 2, 1, 13);    R(x, 0, 3, 2, 18)
+        R(x, 6, 5, 4, 7);    R(x, 7, 6, 5, 9);    R(x, 4, 7, 6, 13);    R(x, 5, 4, 7, 18)
+        R(x, 11, 10, 9, 7);  R(x, 8, 11, 10, 9);  R(x, 9, 8, 11, 13);   R(x, 10, 9, 8, 18)
+        R(x, 12, 15, 14, 7); R(x, 13, 12, 15, 9); R(x, 14, 13, 12, 13); R(x, 15, 14, 13, 18)
 
-  # Coerce into nice happy 32-bit integers
-  B32 = [ make_int32(x[i] + B32[i]) for i in xrange(0, 16) ]
+    # Coerce into nice happy 32-bit integers
+    B32 = [ make_int32(x[i] + B32[i]) for i in xrange(0, 16) ]
 
-  # Convert back to bytes
-  for i in xrange(0, 16):
-      B[i * 4 + 0] = chr((B32[i] >> 0) & 0xff)
-      B[i * 4 + 1] = chr((B32[i] >> 8) & 0xff)
-      B[i * 4 + 2] = chr((B32[i] >> 16) & 0xff)
-      B[i * 4 + 3] = chr((B32[i] >> 24) & 0xff)
+    # Convert back to bytes
+    for i in xrange(0, 16):
+        B[i * 4 + 0] = chr((B32[i] >> 0) & 0xff)
+        B[i * 4 + 1] = chr((B32[i] >> 8) & 0xff)
+        B[i * 4 + 2] = chr((B32[i] >> 16) & 0xff)
+        B[i * 4 + 3] = chr((B32[i] >> 24) & 0xff)
 
 
 def blockmix_salsa8(BY, Bi, Yi, r):
