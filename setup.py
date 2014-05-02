@@ -7,7 +7,7 @@ password-based key derivation function with no dependencies beyond standard
 Python libraries.'''
 
 setup(name = 'pyscrypt',
-      version = '1.0',
+      version = '1.1',
       description = 'Pure-Python Implementation of the scrypt password-based key derivation function',
       long_description = LONG_DESCRIPTION,
       author = 'Richard Moore',
