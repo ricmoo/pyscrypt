@@ -34,6 +34,6 @@
 
 from pyscrypt.hash import hash
 
-VERSION = [1, 1]
+VERSION = [1, 1, 1]
 
 __all__ = ['hash']

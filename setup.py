@@ -4,10 +4,10 @@ from distutils.core import setup
 
 LONG_DESCRIPTION = '''A very simple, pure-Python implementation of the scrypt
 password-based key derivation function with no dependencies beyond standard
-Python libraries.'''
+Python libraries. See README.md for API reference and details.'''
 
 setup(name = 'pyscrypt',
-      version = '1.1',
+      version = '1.1.1',
       description = 'Pure-Python Implementation of the scrypt password-based key derivation function',
       long_description = LONG_DESCRIPTION,
       author = 'Richard Moore',
