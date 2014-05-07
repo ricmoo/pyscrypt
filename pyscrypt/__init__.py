@@ -35,6 +35,6 @@
 from pyscrypt.file import InvalidScryptFileFormat, ScryptFile
 from pyscrypt.hash import hash
 
-VERSION = [1, 2, 1]
+VERSION = [1, 3, 0]
 
 __all__ = ['hash', 'InvalidScryptFileFormat', 'ScryptFile']
