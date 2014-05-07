@@ -58,7 +58,7 @@ from pyscrypt import aesctr
 MODE_READ  = 'r'
 MODE_WRITE = 'w'
 
-BLOCK_SIZE = 16
+BLOCK_SIZE = 1024
 
 class InvalidScryptFileFormat(Exception): pass
 
@@ -308,46 +308,35 @@ class ScryptFile(object):
             # end-of-file checksum) and decrypt into a decrypted buffer 1 block at a time
             while not self._read_finished:
 
-                # We have enough decrypted bytes (or will after decrypted a few encrypted blocks)
-                if len(self._decrypted_buffer) + len(self._encrypted_buffer) - 32 >= size: break
+                # We have enough decrypted bytes (or will after decrypting the encrypted buffer)
+                available = len(self._decrypted_buffer) + len(self._encrypted_buffer) - 32
+                if available >= size: break
 
-                # Read enough AES-256 blocks with a little extra for the possible final checksum
-                count = int(BLOCK_SIZE * math.ceil(size / BLOCK_SIZE)) + 32
-                data = ''
-                while len(data) < count:
-                  chunk = self._fp.read(count - len(data))
-                  if not chunk: break
-                  data += chunk
+                # Read a little extra for the possible final checksum
+                data = self._fp.read(BLOCK_SIZE)
 
-                self._encrypted_buffer += data
-
-                # We didn't get as much as we wanted... The file must be done
-                if len(data) != count:
+                # No data left; we're done
+                if not data:
                     self._read_finished = True
                     break
 
-        # Decrypt as many of the encrypted blocks as possible (leaving the final check sum)
-        while len(self._encrypted_buffer) >= BLOCK_SIZE + 32:
-            block = self._encrypted_buffer[:BLOCK_SIZE]
-            self._decrypted_buffer += self._crypto.decrypt(block)
-            self._checksumer.update(block)
-            self._encrypted_buffer = self._encrypted_buffer[BLOCK_SIZE:]
+                self._encrypted_buffer += data
 
-        # We read all the bytes, so what is left is possible a little more encrypted bytes and the checksum
+        # Decrypt as much of the encrypted data as possible (leaving the final check sum)
+        safe = self._encrypted_buffer[:-32]
+        self._encrypted_buffer = self._encrypted_buffer[-32:]
+        self._decrypted_buffer += self._crypto.decrypt(safe)
+        self._checksumer.update(safe)
+
+        # We read all the bytes, only the checksum remains
         if self._read_finished:
-            leftover = self._encrypted_buffer[:-32]
-            checksum = self._encrypted_buffer[-32:]
-            if leftover:
-                self._decrypted_buffer += self._crypto.decrypt(leftover)
-                self._checksumer.update(leftover)
-            self._check_final_checksum(checksum)
+            self._check_final_checksum(self._encrypted_buffer)
 
         # Send back the number of bytes requests and remove them from the buffer
         decrypted = self._decrypted_buffer[:size]
         self._decrypted_buffer = self._decrypted_buffer[size:]
 
         return decrypted
-
 
     # Write operations
     def flush(self):
@@ -422,13 +411,7 @@ class ScryptFile(object):
         if not self._done_header:
             self._write_header()
 
-        self._decrypted_buffer += str
-
-        output = ''
-        while len(self._decrypted_buffer) >= BLOCK_SIZE:
-            block = self._crypto.encrypt(self._decrypted_buffer[:BLOCK_SIZE])
-            output += block
-            self._decrypted_buffer = self._decrypted_buffer[BLOCK_SIZE:]
-            self._checksumer.update(block)
-        self._fp.write(output)
+        encrypted = self._crypto.encrypt(str)
+        self._checksumer.update(encrypted)
+        self._fp.write(encrypted)
 

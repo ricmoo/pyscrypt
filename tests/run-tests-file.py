@@ -24,7 +24,7 @@ for text_length in [3, 16, 127, 128, 129, 1500]:
     sf.close()
 
     result = {True: "pass", False: "fail"}[decrypted == plaintext]
-    print "Test Encrypt/Decrypt: text_length=%s result=%s" % (text_length, result)
+    print "Test Encrypt/Decrypt: text_length=%s result=%s valid=%s" % (text_length, result, sf.valid)
 
 
 # Generate some files to make sure the tarsnap scrypt utility can read them

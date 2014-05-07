@@ -30,6 +30,7 @@ class Counter(object):
         if nbits % 8 != 0: raise ValueError('invalid counter length')
         self._counter = [ 0 ] * (nbits // 8)
 
+        # Initialize the vector with the initial value
         index = len(self._counter) - 1
         while initial_value:
             self._counter[index] = initial_value % 256
@@ -78,21 +79,14 @@ class AESCounterModeOfOperation(object):
         encrypted = [ ]
         for c in plaintext:
             if len(self._remaining_counter) == 0:
-                encrypted_counter = self._aes.encrypt(self._counter(), self._key, len(self._key))
-                self._remaining_counter.extend(encrypted_counter)
+                self._remaining_counter = self._aes.encrypt(self._counter(), self._key, len(self._key))
             encrypted.append(self._remaining_counter.pop(0) ^ ord(c))
 
         return "".join(chr(c) for c in encrypted)
 
     def decrypt(self, crypttext):
-        decrypted = [ ]
-        for c in crypttext:
-            if len(self._remaining_counter) == 0:
-                encrypted_counter = self._aes.encrypt(self._counter(), self._key, len(self._key))
-                self._remaining_counter.extend(encrypted_counter)
-            decrypted.append(self._remaining_counter.pop(0) ^ ord(c))
-
-        return "".join(chr(c) for c in decrypted)
+        # AES-CTR is symetric
+        return self.encrypt(crypttext)
 
 
 if __name__ == '__main__':
