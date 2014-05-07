@@ -3,12 +3,13 @@
 from distutils.core import setup
 
 LONG_DESCRIPTION = '''A very simple, pure-Python implementation of the scrypt
-password-based key derivation function with no dependencies beyond standard
-Python libraries. See README.md for API reference and details.'''
+password-based key derivation function and tarsnap scrypt file reading/writing
+with no dependencies beyond standard Python libraries. See README.md for API 
+reference and details.'''
 
 setup(name = 'pyscrypt',
-      version = '1.1.1',
-      description = 'Pure-Python Implementation of the scrypt password-based key derivation function',
+      version = '1.2.0',
+      description = 'Pure-Python Implementation of the scrypt password-based key derivation function and scrypt file library',
       long_description = LONG_DESCRIPTION,
       author = 'Richard Moore',
       author_email = 'pyscrypt@ricmoo.com',
