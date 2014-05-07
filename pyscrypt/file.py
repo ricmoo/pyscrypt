@@ -60,23 +60,6 @@ MODE_WRITE = 'w'
 
 BLOCK_SIZE = 16
 
-# We use the crypto library to test until we finish the pure-python aes-256 CTR library
-if False:
-    from Crypto.Cipher import AES
-    from Crypto.Util import Counter
-
-    class aes(object):
-        def __init__(self, key):
-            counter = Counter.new(128, initial_value = 0)
-            self._aes = AES.new(key, AES.MODE_CTR, counter = counter)
-
-        def encrypt(self, plaintext):
-            return self._aes.encrypt(plaintext)
-
-        def decrypt(self, ciphertext):
-            return self._aes.decrypt(ciphertext)
-
-
 class InvalidScryptFileFormat(Exception): pass
 
 class ScryptFile(object):
@@ -150,8 +133,8 @@ class ScryptFile(object):
     #newlines = property(lambda s: s._fp.newlines)    # This requires more work to make work
 
     # @TODO; test with print
-    def _set_softspace(self, value):
-        self._fp.softspace = value
+    #def _set_softspace(self, value):
+    #    self._fp.softspace = value
     #softspace = property(lambda s: s._fp.softspace, _set_softspace)
 
     def fileno(self):
