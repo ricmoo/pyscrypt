@@ -292,7 +292,7 @@ class ScryptFile(object):
         # and remove the returned portion from the decrypted buffer
         if self._read_finished:
             if size is None:
-                decrypted = self._decrypted_buffer[:]
+                decrypted = self._decrypted_buffer
             else:
                 decrypted = self._decrypted_buffer[:size]
             self._decrypted_buffer = self._decrypted[len(decrypted):]
@@ -411,6 +411,7 @@ class ScryptFile(object):
         if not self._done_header:
             self._write_header()
 
+        # Encrypt and write the data
         encrypted = self._crypto.encrypt(str)
         self._checksumer.update(encrypted)
         self._fp.write(encrypted)

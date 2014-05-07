@@ -1,7 +1,7 @@
 pyscrypt
 ========
 
-A very simple, pure-Python implementation of the scrypt password-based key derivation function and _tarsnap_ scrypt file reading/writing with no dependencies beyond standard Python libraries.
+A very simple, pure-Python implementation of the scrypt password-based key derivation function and scrypt file format libraries with no dependencies beyond standard Python libraries.
 
 
 
@@ -32,11 +32,11 @@ hashed = pyscrypt.hash(password = "correct horse battery staple",
 print hashed.encode('hex')
 ```
 
-### Write a Tarsnap Encrypted File
+### Write a scrypt Encrypted File
 
 When writing a file the `N`, `r` and `p` parameters are required. The `salt` parameter is optional, and if omitted will be generated from _urandom_.
 
-The _Tarsnap_ file format includes a final checksum in the file, so be sure to close the file to ensure the checksum is correctly flushed to disk. If the underlying file object cannot be closed (for example, StringIO will release its contents on close) then use the `finalize` method.
+The scrypt file format includes a final checksum in the file, so be sure to close the file to ensure the checksum is correctly flushed to disk. If the underlying file object cannot be closed (for example, StringIO will release its contents on close) then use the `finalize` method.
 
 ```python
 import pyscrypt
@@ -50,7 +50,7 @@ f.close()
 #f.finalize()
 ```
 
-### Read a Tarsnap Encrypted File
+### Read a scrypt Encrypted File
 
 ```python
 import pyscrypt
