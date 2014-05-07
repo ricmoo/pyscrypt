@@ -1,4 +1,9 @@
 include README.md
 include LICENSE.txt
-include tests/run-tests.py
+include tests/run-tests-file.py
+include tests/run-tests-hash.py
+include tests/test1.scrypt
+include tests/test1.txt
+include tests/test2.scrypt
+include tests/test2.txt
 

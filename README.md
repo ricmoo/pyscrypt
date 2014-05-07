@@ -1,12 +1,24 @@
 pyscrypt
 ========
 
-A very simple, pure-Python implementation of the scrypt password-based key derivation function with no dependencies beyond standard Python libraries.
+A very simple, pure-Python implementation of the scrypt password-based key derivation function and _tarsnap_ scrypt file reading/writing with no dependencies beyond standard Python libraries.
 
 
 
 API
 ---
+
+### scrypt PBKDF hash
+
+The scrypt algorithm is a password-based key derivation function, which takes in several parameters to adjust the difficulty and returns a string of bytes. This is useful for transforming passwords into a target length, while at the same time increaing the cost of attempting to brute-froce guess a password.
+
+* `password` - a passowrd
+* `salt` - a cryptographic salt
+* `N` - general work factor
+* `r` - memory cost
+* `p` - computation cost (parallelization factor)
+* `dkLen` - the output length (in bytes) to return
+
 
 ```python
 import pyscrypt
@@ -20,20 +32,78 @@ hashed = pyscrypt.hash(password = "correct horse battery staple",
 print hashed.encode('hex')
 ```
 
+### Write a Tarsnap Encrypted File
+
+When writing a file the `N`, `r` and `p` parameters are required. The `salt` parameter is optional, and if omitted will be generated from _urandom_.
+
+The _Tarsnap_ file format includes a final checksum in the file, so be sure to close the file to ensure the checksum is correctly flushed to disk. If the underlying file object cannot be closed (for example, StringIO will release its contents on close) then use the `finalize` method.
+
+```python
+import pyscrypt
+
+fp = file('filename.scrypt', 'w')
+f = pyscrypt.ScryptFile(fp, "password", N = 1024, r = 1, p = 1)
+f.write("Hello World")
+f.close()
+
+# Instead of close, use this method to keep the underlying file open
+#f.finalize()
+```
+
+### Read a Tarsnap Encrypted File
+
+```python
+import pyscrypt
+
+# Read the entire contents
+fp = file('filename.scrypt')
+f = pyscrypt.ScryptFile(fp, password = "password")
+print f.read()
+
+# Iterate over each line
+fp = file('filename.scrypt')
+f = pyscrypt.ScryptFile(fp, password = "password")
+for line in f:
+  print line
+
+# Ensure the integrity of the file after completely read
+print f.valid
+```
+
 
 
 Test Harness
 ------------
 
-A handful of test cases are provided, if you run the library from the command line, it will iterate over them indicating pass/fail.
+A handful of test cases are provided for both the hash algorithm and the ScryptFile library. The ScryptFile tests generate tests that can be validated against the command line utility (http://www.tarsnap.com/scrypt.html).
 
 ```python
-# python pyscrypt.py
+# python tests/run-tests-hash.py
+Version: 1.2.0
 Test 1: pass
 Test 2: pass
 Test 3: pass
 Test 4: pass
 Test 5: pass
+
+# python tests/run-tests-file.py 
+Test Encrypt/Decrypt: text_length=3 result=pass
+Test Encrypt/Decrypt: text_length=16 result=pass
+Test Encrypt/Decrypt: text_length=127 result=pass
+Test Encrypt/Decrypt: text_length=128 result=pass
+Test Encrypt/Decrypt: text_length=129 result=pass
+Test Encrypt/Decrypt: text_length=1500 result=pass
+Created /tmp/test-10.scrypt and /tmp/test-10.txt. Check with tarsnap.
+Created /tmp/test-100.scrypt and /tmp/test-100.txt. Check with tarsnap.
+Created /tmp/test-1000.scrypt and /tmp/test-1000.txt. Check with tarsnap.
+Test Verify: filename=tests/test1.scrypt result=pass
+Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
+Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
+Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
+Test Verify: filename=tests/test2.scrypt result=pass
+Test Decrypt: dec('tests/test2.scrypt') == 'tests/test2.txt' result=pass valid=None
+Test Decrypt: dec('tests/test2.scrypt') == 'tests/test2.txt' result=pass valid=None
+Test Decrypt: dec('tests/test2.scrypt') == 'tests/test2.txt' result=pass valid=True
 ```
 
 
@@ -70,7 +140,7 @@ On my MacBook Air, I get around 3,000 hashes/s using a C-wrapper while I get aro
 ```
     
 **How do I get a question I have added?**
-E-mail me at me@ricmoo.com with any questions, suggestions, comments, et cetera.
+E-mail me at pyscrypt@ricmoo.com with any questions, suggestions, comments, et cetera.
 
 **Can I give you my money?**
 Umm... Ok? :-)
