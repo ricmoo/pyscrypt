@@ -51,8 +51,8 @@ import math
 import os
 import struct
 
-from pyscrypt.hash import hash
-from pyscrypt import aesctr
+from .hash import hash
+from . import aesctr
 
 
 MODE_READ  = 'r'

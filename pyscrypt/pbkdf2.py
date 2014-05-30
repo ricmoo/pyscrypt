@@ -23,7 +23,7 @@
 
 import struct
 
-from pyscrypt.util import block_xor
+from .util import block_xor
 
 def pbkdf2(password, salt, count, key_length, prf):
     '''Returns the result of the Password-Based Key Derivation Function 2.

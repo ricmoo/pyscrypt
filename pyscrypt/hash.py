@@ -24,8 +24,8 @@
 import hashlib
 import hmac
 
-from pyscrypt.pbkdf2 import pbkdf2
-from pyscrypt.util import array_overwrite, block_xor
+from .pbkdf2 import pbkdf2
+from .util import array_overwrite, block_xor
 
 def integerify(B, Bi, r):
     '''"A bijective function from ({0, 1} ** k) to {0, ..., (2 ** k) - 1".'''

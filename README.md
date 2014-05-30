@@ -79,7 +79,7 @@ A handful of test cases are provided for both the hash algorithm and the ScryptF
 
 ```python
 # python tests/run-tests-hash.py
-Version: 1.2.0
+Version: 1.3.1
 Test 1: pass
 Test 2: pass
 Test 3: pass
@@ -87,17 +87,18 @@ Test 4: pass
 Test 5: pass
 
 # python tests/run-tests-file.py 
-Test Encrypt/Decrypt: text_length=3 result=pass
-Test Encrypt/Decrypt: text_length=16 result=pass
-Test Encrypt/Decrypt: text_length=127 result=pass
-Test Encrypt/Decrypt: text_length=128 result=pass
-Test Encrypt/Decrypt: text_length=129 result=pass
-Test Encrypt/Decrypt: text_length=1500 result=pass
+Version: 1.3.1
+Test Encrypt/Decrypt: text_length=3 result=pass valid=True
+Test Encrypt/Decrypt: text_length=16 result=pass valid=True
+Test Encrypt/Decrypt: text_length=127 result=pass valid=True
+Test Encrypt/Decrypt: text_length=128 result=pass valid=True
+Test Encrypt/Decrypt: text_length=129 result=pass valid=True
+Test Encrypt/Decrypt: text_length=1500 result=pass valid=True
 Created /tmp/test-10.scrypt and /tmp/test-10.txt. Check with tarsnap.
 Created /tmp/test-100.scrypt and /tmp/test-100.txt. Check with tarsnap.
 Created /tmp/test-1000.scrypt and /tmp/test-1000.txt. Check with tarsnap.
 Test Verify: filename=tests/test1.scrypt result=pass
-Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
+Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=None
 Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
 Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
 Test Verify: filename=tests/test2.scrypt result=pass
@@ -106,6 +107,10 @@ Test Decrypt: dec('tests/test2.scrypt') == 'tests/test2.txt' result=pass valid=N
 Test Decrypt: dec('tests/test2.scrypt') == 'tests/test2.txt' result=pass valid=True
 ```
 
+Notice that `valid` is sometimes None. The value of `valid` can take on one of three values:
+* **None** - File has not been entirely read, so the checksum cannot be verified
+* **True** - The end-of-file checksum is valid
+* **False** - The end-of-file checksum is invalid (some bytes in the file are corrupt)
 
 FAQ
 ---

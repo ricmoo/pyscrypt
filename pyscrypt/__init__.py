@@ -32,9 +32,9 @@
 # This implementation is VERY slow; It is meant only for reference and
 # for situations where C wrappers are not permitted or difficult to install.
 
-from pyscrypt.file import InvalidScryptFileFormat, ScryptFile
-from pyscrypt.hash import hash
+from .file import InvalidScryptFileFormat, ScryptFile
+from .hash import hash
 
-VERSION = [1, 3, 0]
+VERSION = [1, 3, 1]
 
 __all__ = ['hash', 'InvalidScryptFileFormat', 'ScryptFile']
