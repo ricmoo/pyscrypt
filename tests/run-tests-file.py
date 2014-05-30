@@ -1,8 +1,14 @@
+import sys
+sys.path += '..'
+
 import os
 
 import cStringIO as StringIO
 
+import pyscrypt
 from pyscrypt import ScryptFile
+
+print "Version:", ".".join(str(p) for p in pyscrypt.VERSION)
 
 # Test decrypted output is equal to the input
 for text_length in [3, 16, 127, 128, 129, 1500]:
