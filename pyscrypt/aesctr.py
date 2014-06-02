@@ -137,61 +137,38 @@ class AES(object):
         return result
 
 
-class Counter(object):
-    def __init__(self, nbits, initial_value = 1):
-        if nbits % 8 != 0: raise ValueError('invalid counter length')
-        self._counter = [ 0 ] * (nbits // 8)
-
-        # Initialize the vector with the initial value
-        index = len(self._counter) - 1
-        while initial_value:
-            self._counter[index] = initial_value % 256
-            initial_value //= 256
-            index -= 1
-            if index == -1: raise ValueError('initial_value too large')
-
-        # Generator that returns big-endian ++ operations on our counter array
-        def next_value(self):
-          while True:
-            yield self._counter
-
-            # Add one to the right-most byte of the counter and carry if overflows a byte
-            index = len(self._counter) - 1
-            while True:
-                self._counter[index] += 1
-
-                # Carry...
-                if self._counter[index] == 256:
-                    self._counter[index] = 0
-                    index -= 1
-
-                    # Overflow... Wrap around
-                    if index == -1:
-                        self._counter = [ 0 ] * 16
-                        break
-                else:
-                    break
-
-        self._next_value = next_value(self)
-
-    def __call__(self):
-        return self._next_value.next()
-
-
 class AESCounterModeOfOperation(object):
 
-    def __init__(self, key, counter):
+    def __init__(self, key):
         self._aes = AES(key)
 
-        self._counter = counter
+        # Convert the initial value into an array of bytes
+        self._counter = [ 0 ] * 16
+
+        # Remaining bytes to xor our input against
         self._remaining_counter = [ ]
 
     def encrypt(self, plaintext):
         encrypted = [ ]
-        for c in plaintext:
-            if len(self._remaining_counter) == 0:
-                self._remaining_counter = self._aes.encrypt(self._counter())
-            encrypted.append(self._remaining_counter.pop(0) ^ ord(c))
+
+        # Fill up our bytes to xor against
+        while len(self._remaining_counter) < len(plaintext):
+            self._remaining_counter += self._aes.encrypt(self._counter)
+
+            # Increment the counter
+            for i in xrange(15, -1, -1):
+                self._counter[i] += 1
+
+                if self._counter[i] < 256: break
+
+                # Carry the one
+                self._counter[i] = 0
+
+            # Overflow! Exposing the same (key, counter_value) could reveal key
+            else:
+                raise ValueError('counter value would overflow, compromising security.')
+
+        encrypted = [ (ord(p) ^ c) for (p, c) in zip(plaintext, self._remaining_counter) ]
 
         return "".join(chr(c) for c in encrypted)
 
@@ -219,13 +196,13 @@ if __name__ == '__main__':
                     kaes = KAES.new(key, KAES.MODE_CTR, counter = KCounter.new(128, initial_value = 0))
                     kenc = kaes.encrypt(plaintext)
 
-                    aes = AESCounterModeOfOperation(key, counter = Counter(nbits = 128, initial_value = 0))
+                    aes = AESCounterModeOfOperation(key)
                     enc = aes.encrypt(plaintext)
 
                     result = {True: "pass", False: "fail"}[kenc == enc]
                     print "Test Encrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
 
-                    aes = AESCounterModeOfOperation(key, counter = Counter(nbits = 128, initial_value = 0))
+                    aes = AESCounterModeOfOperation(key)
                     result = {True: "pass", False: "fail"}[plaintext == aes.decrypt(kenc)]
                     print "Test Decrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
 

@@ -256,8 +256,7 @@ class ScryptFile(object):
             self._checksumer.update(header[64:96])
 
             # Prepare the AES engine
-            counter = aesctr.Counter(nbits = 128, initial_value = 0)
-            self._crypto = aesctr.AESCounterModeOfOperation(key = self.key[:32], counter = counter)
+            self._crypto = aesctr.AESCounterModeOfOperation(key = self.key[:32])
 
             self._done_header = True
 
@@ -372,8 +371,7 @@ class ScryptFile(object):
         self._fp.write(header)
 
         # Prepare the AES engine
-        counter = aesctr.Counter(nbits = 128, initial_value = 0)
-        self._crypto = aesctr.AESCounterModeOfOperation(key = self.key[:32], counter = counter)
+        self._crypto = aesctr.AESCounterModeOfOperation(key = self.key[:32])
         #self._crypto = aes(self.key[:32])
 
         self._done_header = True
