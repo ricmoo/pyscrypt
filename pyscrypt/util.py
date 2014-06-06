@@ -32,5 +32,5 @@ def block_xor(source, source_start, dest, dest_start, length):
     '''Performs xor on arrays source and dest, storing the result back in dest.'''
 
     for i in xrange(0, length):
-        dest[dest_start + i] = chr(ord(dest[dest_start + i]) ^ ord(source[source_start + i]))
+        dest[dest_start + i] = dest[dest_start + i] ^ source[source_start + i]
 

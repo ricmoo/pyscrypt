@@ -31,7 +31,7 @@ def integerify(B, Bi, r):
     '''"A bijective function from ({0, 1} ** k) to {0, ..., (2 ** k) - 1".'''
 
     Bi += (2 * r - 1) * 64
-    n  = ord(B[Bi]) | (ord(B[Bi + 1]) << 8) | (ord(B[Bi + 2]) << 16) | (ord(B[Bi + 3]) << 24)
+    n  = B[Bi] | (B[Bi + 1] << 8) | (B[Bi + 2] << 16) | (B[Bi + 3] << 24)
     return n
 
 def make_int32(v):
@@ -41,40 +41,40 @@ def make_int32(v):
     return v
 
 
-def R(X, destination, a1, a2, b):
-    '''A single round of Salsa.'''
-
-    a = (X[a1] + X[a2]) & 0xffffffff
-    X[destination] ^= ((a << b) | (a >> (32 - b)))
+ROUNDS = [
+    (4, 0, 12, 7),   (8, 4, 0, 9),    (12, 8, 4, 13),   (0, 12, 8, 18),
+    (9, 5, 1, 7),    (13, 9, 5, 9),   (1, 13, 9, 13),   (5, 1, 13, 18),
+    (14, 10, 6, 7),  (2, 14, 10, 9),  (6, 2, 14, 13),   (10, 6, 2, 18),
+    (3, 15, 11, 7),  (7, 3, 15, 9),   (11, 7, 3, 13),   (15, 11, 7, 18),
+    (1, 0, 3, 7),    (2, 1, 0, 9),    (3, 2, 1, 13),    (0, 3, 2, 18),
+    (6, 5, 4, 7),    (7, 6, 5, 9),    (4, 7, 6, 13),    (5, 4, 7, 18),
+    (11, 10, 9, 7),  (8, 11, 10, 9),  (9, 8, 11, 13),   (10, 9, 8, 18),
+    (12, 15, 14, 7), (13, 12, 15, 9), (14, 13, 12, 13), (15, 14, 13, 18),
+]
 
 
 def salsa20_8(B):
     '''Salsa 20/8 stream cypher; Used by BlockMix. See http://en.wikipedia.org/wiki/Salsa20'''
 
     # Convert the character array into an int32 array
-    B32 = [ make_int32((ord(B[i * 4]) | (ord(B[i * 4 + 1]) << 8) | (ord(B[i * 4 + 2]) << 16) | (ord(B[i * 4 + 3]) << 24))) for i in xrange(0, 16) ]
+    B32 = [ make_int32((B[i * 4] | (B[i * 4 + 1] << 8) | (B[i * 4 + 2] << 16) | (B[i * 4 + 3] << 24))) for i in xrange(0, 16) ]
     x = [ i for i in B32 ]
 
     # Salsa... Time to dance.
-    for i in xrange(8, 0, -2):
-        R(x, 4, 0, 12, 7);   R(x, 8, 4, 0, 9);    R(x, 12, 8, 4, 13);   R(x, 0, 12, 8, 18)
-        R(x, 9, 5, 1, 7);    R(x, 13, 9, 5, 9);   R(x, 1, 13, 9, 13);   R(x, 5, 1, 13, 18)
-        R(x, 14, 10, 6, 7);  R(x, 2, 14, 10, 9);  R(x, 6, 2, 14, 13);   R(x, 10, 6, 2, 18)
-        R(x, 3, 15, 11, 7);  R(x, 7, 3, 15, 9);   R(x, 11, 7, 3, 13);   R(x, 15, 11, 7, 18)
-        R(x, 1, 0, 3, 7);    R(x, 2, 1, 0, 9);    R(x, 3, 2, 1, 13);    R(x, 0, 3, 2, 18)
-        R(x, 6, 5, 4, 7);    R(x, 7, 6, 5, 9);    R(x, 4, 7, 6, 13);    R(x, 5, 4, 7, 18)
-        R(x, 11, 10, 9, 7);  R(x, 8, 11, 10, 9);  R(x, 9, 8, 11, 13);   R(x, 10, 9, 8, 18)
-        R(x, 12, 15, 14, 7); R(x, 13, 12, 15, 9); R(x, 14, 13, 12, 13); R(x, 15, 14, 13, 18)
+    for i in (8, 6, 4, 2): #xrange(8, 0, -2):
+        for (destination, a1, a2, b) in ROUNDS:
+            a = (x[a1] + x[a2]) & 0xffffffff
+            x[destination] ^= ((a << b) | (a >> (32 - b)))
 
     # Coerce into nice happy 32-bit integers
     B32 = [ make_int32(x[i] + B32[i]) for i in xrange(0, 16) ]
 
     # Convert back to bytes
     for i in xrange(0, 16):
-        B[i * 4 + 0] = chr((B32[i] >> 0) & 0xff)
-        B[i * 4 + 1] = chr((B32[i] >> 8) & 0xff)
-        B[i * 4 + 2] = chr((B32[i] >> 16) & 0xff)
-        B[i * 4 + 3] = chr((B32[i] >> 24) & 0xff)
+        B[i * 4 + 0] = (B32[i] >> 0) & 0xff
+        B[i * 4 + 1] = (B32[i] >> 8) & 0xff
+        B[i * 4 + 2] = (B32[i] >> 16) & 0xff
+        B[i * 4 + 3] = (B32[i] >> 24) & 0xff
 
 
 def blockmix_salsa8(BY, Bi, Yi, r):
@@ -129,11 +129,11 @@ def hash(password, salt, N, r, p, dkLen):
     # A psuedorandom function
     prf = lambda k, m: hmac.new(key = k, msg = m, digestmod = hashlib.sha256).digest()
 
-    B  = [ c for c in pbkdf2(password, salt, 1, p * 128 * r, prf) ]
-    XY = [ chr(0) ] * (256 * r)
-    V  = [ chr(0) ] * (128 * r * N)
+    B  = [ ord(c) for c in pbkdf2(password, salt, 1, p * 128 * r, prf) ]
+    XY = [ 0 ] * (256 * r)
+    V  = [ 0 ] * (128 * r * N)
 
     for i in xrange(0, p):
         smix(B, i * 128 * r, r, N, V, XY)
 
-    return pbkdf2(password, ''.join(B), 1, dkLen, prf)
+    return pbkdf2(password, ''.join(chr(c) for c in B), 1, dkLen, prf)
