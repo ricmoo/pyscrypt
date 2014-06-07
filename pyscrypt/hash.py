@@ -25,7 +25,7 @@ import hashlib
 import hmac
 
 from .pbkdf2 import pbkdf2
-from .util import array_overwrite, block_xor
+
 
 def integerify(B, Bi, r):
     '''"A bijective function from ({0, 1} ** k) to {0, ..., (2 ** k) - 1".'''
@@ -61,7 +61,7 @@ def salsa20_8(B):
     x = [ i for i in B32 ]
 
     # Salsa... Time to dance.
-    for i in (8, 6, 4, 2): #xrange(8, 0, -2):
+    for i in (8, 6, 4, 2):
         for (destination, a1, a2, b) in ROUNDS:
             a = (x[a1] + x[a2]) & 0xffffffff
             x[destination] ^= ((a << b) | (a >> (32 - b)))
@@ -84,32 +84,43 @@ def blockmix_salsa8(BY, Bi, Yi, r):
     X = [ BY[i] for i in xrange(start, start + 64) ]              # BlockMix - 1
 
     for i in xrange(0, 2 * r):                                    # BlockMix - 2
-        block_xor(BY, i * 64, X, 0, 64)                           # BlockMix - 3(inner)
+
+        for xi in xrange(0, 64):                                   # BlockMix - 3(inner)
+            X[xi] ^= BY[i * 64 + xi]
+
         salsa20_8(X)                                              # BlockMix - 3(outer)
-        array_overwrite(X, 0, BY, Yi + (i * 64), 64)              # BlockMix - 4
+        aod = Yi + (i * 64)                                       # BlockMix - 4
+        BY[aod:aod + 64] = X[:64]
 
     for i in xrange(0, r):                                        # BlockMix - 6 (and below)
-        array_overwrite(BY, Yi + (i * 2) * 64, BY, Bi + (i * 64), 64)
+        aos = Yi + (i * 2) * 64
+        aod = Bi + (i * 64)
+        BY[aod:aod + 64] = BY[aos:aos + 64]
 
     for i in xrange(0, r):
-        array_overwrite(BY, Yi + (i * 2 + 1) * 64, BY, Bi + (i + r) * 64, 64)
+        aos = Yi + (i * 2 + 1) * 64
+        aod = Bi + (i + r) * 64
+        BY[aod:aod + 64] = BY[aos:aos + 64]
 
 
 def smix(B, Bi, r, N, V, X):
     '''SMix; a specific case of ROMix. See scrypt.pdf in the links above.'''
 
-    array_overwrite(B, Bi, X, 0, 128 * r)                 # ROMix - 1
+    X[:128 * r] = B[Bi:Bi + 128 * r]                   # ROMix - 1
 
-    for i in xrange(0, N):                                # ROMix - 2
-        array_overwrite(X, 0, V, i * (128 * r), 128 * r)  # ROMix - 3
-        blockmix_salsa8(X, 0, 128 * r, r)                 # ROMix - 4
+    for i in xrange(0, N):                             # ROMix - 2
+        aod = i * 128 * r                              # ROMix - 3
+        V[aod:aod + 128 * r] = X[:128 * r]
+        blockmix_salsa8(X, 0, 128 * r, r)              # ROMix - 4
 
-    for i in xrange(0, N):                                # ROMix - 6
-        j = integerify(X, 0, r) & (N - 1)                 # ROMix - 7
-        block_xor(V, j * (128 * r), X, 0, 128 * r)        # ROMix - 8(inner)
-        blockmix_salsa8(X, 0, 128 * r, r)                 # ROMix - 9(outer)
+    for i in xrange(0, N):                             # ROMix - 6
+        j = integerify(X, 0, r) & (N - 1)              # ROMix - 7
+        for xi in xrange(0, 128 * r):                  # ROMix - 8(inner)
+            X[xi] ^= V[j * (128 * r) + xi]
 
-    array_overwrite(X, 0, B, Bi, 128 * r)                 # ROMix - 10
+        blockmix_salsa8(X, 0, 128 * r, r)              # ROMix - 9(outer)
+
+    B[Bi:Bi + 128 * r] = X[:128 * r]                   # ROMix - 10
 
 
 
