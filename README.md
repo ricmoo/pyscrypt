@@ -112,13 +112,27 @@ Notice that `valid` is sometimes None. The value of `valid` can take on one of t
 * **True** - The end-of-file checksum is valid
 * **False** - The end-of-file checksum is invalid (some bytes in the file are corrupt)
 
+Performance
+-----------
+
+The scrypt algorithm is a CPU and memory intense algorithm, **by design**. For comparison, here are numbers based on my MacBook Air for scrypt hashing with (N = 1024, r = 1, p =1):
+
+**CPython** (what you probably have installed)
+6 hashes per second
+
+**Pypy** (a much faster Python implementation, see [pypy.org](http://pypy.org))
+250 hashes per second
+
+**C-Wrapper** (See the FAQ below)
+2364 hashes per second
+
+
 FAQ
 ---
 
 **Why is this so slow?**
 It is written in pure Python. It is not meant to be fast, more of a reference solution.
 
-On my MacBook Air, I get around 3,000 hashes/s using a C-wrapper while I get around 2 hashes/s using this implementation.
 
 **How do I get one of these C wrappers you speak of?**
 

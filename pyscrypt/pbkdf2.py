@@ -23,8 +23,6 @@
 
 import struct
 
-from .util import block_xor
-
 def pbkdf2(password, salt, count, key_length, prf):
     '''Returns the result of the Password-Based Key Derivation Function 2.
       prf - a psuedorandom function
@@ -40,7 +38,9 @@ def pbkdf2(password, salt, count, key_length, prf):
         if count > 1:
             U = [ c for c in U ]
             for i in xrange(2, 1 + count):
-                block_xor(prf(password, ''.join(U)), 0, U, 0, len(U))
+                u = prf(password, ''.join(U))
+                for ix in xrange(0, len(U)):
+                    U[ix] ^= u[ix]
         U = ''.join(U)
 
         return U
