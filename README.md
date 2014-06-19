@@ -118,12 +118,15 @@ Performance
 The scrypt algorithm is a CPU and memory intense algorithm, **by design**. For comparison, here are numbers based on my MacBook Air for scrypt hashing with (N = 1024, r = 1, p =1):
 
 **CPython** (what you probably have installed)
+
 6 hashes per second
 
 **Pypy** (a much faster Python implementation, see [pypy.org](http://pypy.org))
+
 250 hashes per second
 
 **C-Wrapper** (See the FAQ below)
+
 2364 hashes per second
 
 
