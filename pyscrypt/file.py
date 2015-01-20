@@ -260,11 +260,11 @@ class ScryptFile(object):
 
             self._done_header = True
 
-        except InvalidScryptFileFormat, e:
+        except InvalidScryptFileFormat as e:
             self.close()
             raise e
 
-        except Exception, e:
+        except Exception as e:
             self.close()
             raise InvalidScryptFileFormat('Header error (%s)' % e)
 

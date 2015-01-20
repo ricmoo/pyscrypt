@@ -200,11 +200,11 @@ if __name__ == '__main__':
                     enc = aes.encrypt(plaintext)
 
                     result = {True: "pass", False: "fail"}[kenc == enc]
-                    print "Test Encrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
+                    print("Test Encrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result))
 
                     aes = AESCounterModeOfOperation(key)
                     result = {True: "pass", False: "fail"}[plaintext == aes.decrypt(kenc)]
-                    print "Test Decrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
+                    print("Test Decrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result))
 
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)

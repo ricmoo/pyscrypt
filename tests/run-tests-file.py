@@ -8,7 +8,7 @@ import cStringIO as StringIO
 import pyscrypt
 from pyscrypt import ScryptFile
 
-print "Version:", ".".join(str(p) for p in pyscrypt.VERSION)
+print("Version:", ".".join(str(p) for p in pyscrypt.VERSION))
 
 # Test decrypted output is equal to the input
 for text_length in [3, 16, 127, 128, 129, 1500]:
@@ -30,7 +30,7 @@ for text_length in [3, 16, 127, 128, 129, 1500]:
     sf.close()
 
     result = {True: "pass", False: "fail"}[decrypted == plaintext]
-    print "Test Encrypt/Decrypt: text_length=%s result=%s valid=%s" % (text_length, result, sf.valid)
+    print("Test Encrypt/Decrypt: text_length=%s result=%s valid=%s" % (text_length, result, sf.valid))
 
 
 # Generate some files to make sure the tarsnap scrypt utility can read them
@@ -42,7 +42,7 @@ for length in (10, 100, 1000):
     sf.write(text)
     sf.close()
     file(path_text, 'w').write(text)
-    print "Created %s and %s. Check with tarsnap." % (path_scrypt, path_text)
+    print("Created %s and %s. Check with tarsnap." % (path_scrypt, path_text))
 
 # Open some files created with the tarsnap utility and read them
 for filename in ('test1', 'test2'):
@@ -51,7 +51,7 @@ for filename in ('test1', 'test2'):
 
     valid = ScryptFile.verify_file(file(path_scrypt), 'password')
     result = {True: "pass", False: "fail"}[valid]
-    print "Test Verify: filename=%s result=%s" % (path_scrypt, result)
+    print("Test Verify: filename=%s result=%s" % (path_scrypt, result))
 
     for test in (0, 1, 2):
         sf = ScryptFile(file(path_scrypt), 'password')
@@ -73,4 +73,4 @@ for filename in ('test1', 'test2'):
             content_text = f.read()
 
         result = {True: "pass", False: "fail"}[content_scrypt == content_text]
-        print "Test Decrypt: dec(%r) == %r result=%s valid=%s" % (path_scrypt, path_text, result, sf.valid)
+        print("Test Decrypt: dec(%r) == %r result=%s valid=%s" % (path_scrypt, path_text, result, sf.valid))

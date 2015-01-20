@@ -29,7 +29,7 @@ hashed = pyscrypt.hash(password = "correct horse battery staple",
                        r = 1, 
                        p = 1, 
                        dkLen = 256)
-print hashed.encode('hex')
+print(hashed.encode('hex'))
 ```
 
 ### Write a scrypt Encrypted File
@@ -58,16 +58,16 @@ import pyscrypt
 # Read the entire contents
 fp = file('filename.scrypt')
 f = pyscrypt.ScryptFile(fp, password = "password")
-print f.read()
+print(f.read())
 
 # Iterate over each line
 fp = file('filename.scrypt')
 f = pyscrypt.ScryptFile(fp, password = "password")
 for line in f:
-  print line
+  print(line)
 
 # Ensure the integrity of the file after completely read
-print f.valid
+print(f.valid)
 ```
 
 
