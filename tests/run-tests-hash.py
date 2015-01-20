@@ -25,7 +25,7 @@ sys.path += '..'
 
 import pyscrypt
 
-print "Version:", ".".join(str(p) for p in pyscrypt.VERSION)
+print("Version:", ".".join(str(p) for p in pyscrypt.VERSION))
 
 Tests = [
     dict(password = 'password', salt = 'salt', N = 2, r = 1, p = 1, dkLen = 32, result = '6d1bb878eee9ce4a7b77d7a44103574d4cbfe3c15ae3940f0ffe75cd5e1e0afa'),
@@ -44,8 +44,8 @@ if False:
         test['buflen'] = test['dkLen']
         del test['dkLen']
         del test['result']
-        print scrypt.hash(**test).encode('hex')
-        print
+        print(scrypt.hash(**test).encode('hex'))
+        print()
 
 # Run each test case
 index = 0
@@ -60,4 +60,4 @@ for test in Tests:
     h = pyscrypt.hash(**test).encode('hex')
 
     # How'd we do?
-    print "Test %d: %s" % (index, { True: "pass", False: "FAIL" }[h == result])
+    print("Test %d: %s" % (index, { True: "pass", False: "FAIL" }[h == result]))
