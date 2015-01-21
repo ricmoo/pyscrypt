@@ -1,20 +1,26 @@
 pyscrypt
 ========
 
-A very simple, pure-Python implementation of the scrypt password-based key derivation function and scrypt file format libraries with no dependencies beyond standard Python libraries.
+A very simple, pure-Python implementation of the scrypt password-based key derivation function and scrypt file format libraries.
 
+### Features
 
-Features
---------
 
 - Pure Python (no external dependancies)
 - Python 2.x and 3.x support (see below for Python 3 details)
 
+--
+
+**The sample code in this documentation is for Python 2.x. For Python 3.x, see the Python 3 section below.**
+
+
+
 
 API
----
+===
 
 ### scrypt PBKDF hash
+
 
 The scrypt algorithm is a password-based key derivation function, which takes in several parameters to adjust the difficulty and returns a string of bytes. This is useful for transforming passwords into a target length, while at the same time increaing the cost of attempting to brute-froce guess a password.
 
@@ -34,7 +40,7 @@ hashed = pyscrypt.hash(password = "correct horse battery staple",
                        N = 1024, 
                        r = 1, 
                        p = 1, 
-                       dkLen = 256)
+                       dkLen = 32)
 print hashed.encode('hex')
 ```
 
@@ -42,18 +48,26 @@ print hashed.encode('hex')
 
 When writing a file the `N`, `r` and `p` parameters are required. The `salt` parameter is optional, and if omitted will be generated from _urandom_.
 
-The scrypt file format includes a final checksum in the file, so be sure to close the file to ensure the checksum is correctly flushed to disk. If the underlying file object cannot be closed (for example, StringIO will release its contents on close) then use the `finalize` method.
-
 ```python
 import pyscrypt
 
-fp = file('filename.scrypt', 'w')
-f = pyscrypt.ScryptFile(fp, "password", N = 1024, r = 1, p = 1)
-f.write("Hello World")
-f.close()
+with pyscrypt.ScryptFile('filename.scrypt', "password", N = 1024, r = 1, p = 1) as f:
+    f.write("Hello World")
+```
 
-# Instead of close, use this method to keep the underlying file open
-#f.finalize()
+To write to a file-like object without the context manager, it is important to either close the ScryptFile manually or to call finalize to ensure the footer gets flushed:
+
+```python
+import pyscrypt
+import StringIO
+
+output = StringIO.StringIO()
+sf = pyscrypt.ScryptFile(output, "pass123", 1024, 1, 1)
+sf.write("Hello world")
+sf.finalize()
+
+output.seek(0)
+encrypted = output.read()
 ```
 
 ### Read a scrypt Encrypted File
@@ -62,30 +76,28 @@ f.close()
 import pyscrypt
 
 # Read the entire contents
-fp = file('filename.scrypt')
-f = pyscrypt.ScryptFile(fp, password = "password")
-print f.read()
+with pyscrypt.ScryptFile('filename.scrypt', password = "password") as f:
+    print f.read()
 
 # Iterate over each line
-fp = file('filename.scrypt')
-f = pyscrypt.ScryptFile(fp, password = "password")
-for line in f:
-    print line
+with pyscrypt.ScryptFile('filename.scrypt', password = "password") as f:
+    for line in f:
+        print line
 
-# Ensure the integrity of the file after completely read
-print f.valid:
+    # Ensure the integrity of the file after completely read
+    print f.valid
 ```
 
 
 
 Test Harness
-------------
+============
 
 A handful of test cases are provided for both the hash algorithm and the ScryptFile library. The ScryptFile tests generate tests that can be validated against the command line utility (http://www.tarsnap.com/scrypt.html).
 
 ```python
 # python tests/run-tests-hash.py
-Version: 1.3.1
+Version: 1.6.0
 Test 1: pass
 Test 2: pass
 Test 3: pass
@@ -93,7 +105,7 @@ Test 4: pass
 Test 5: pass
 
 # python tests/run-tests-file.py 
-Version: 1.3.1
+Version: 1.6.0
 Test Encrypt/Decrypt: text_length=3 result=pass valid=True
 Test Encrypt/Decrypt: text_length=16 result=pass valid=True
 Test Encrypt/Decrypt: text_length=127 result=pass valid=True
@@ -103,6 +115,7 @@ Test Encrypt/Decrypt: text_length=1500 result=pass valid=True
 Created /tmp/test-10.scrypt and /tmp/test-10.txt. Check with tarsnap.
 Created /tmp/test-100.scrypt and /tmp/test-100.txt. Check with tarsnap.
 Created /tmp/test-1000.scrypt and /tmp/test-1000.txt. Check with tarsnap.
+Test With filename: result=pass
 Test Verify: filename=tests/test1.scrypt result=pass
 Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=None
 Test Decrypt: dec('tests/test1.scrypt') == 'tests/test1.txt' result=pass valid=True
@@ -119,7 +132,7 @@ Notice that `valid` is sometimes None. The value of `valid` can take on one of t
 * **False** - The end-of-file checksum is invalid (some bytes in the file are corrupt)
 
 Performance
------------
+===========
 
 The scrypt algorithm is a CPU and memory intense algorithm, **by design**. For comparison, here are numbers based on my MacBook Air for scrypt hashing with (N = 1024, r = 1, p =1):
 
@@ -137,16 +150,37 @@ The scrypt algorithm is a CPU and memory intense algorithm, **by design**. For c
 
 
 Python 3
---------
+========
 
 This library is Python 3 friendly, however, there are a few things to note.
 
 - The parameters `password` and `salt` must be byte objects. e.g. `b"pass123"` instead of `"pass123"`.
 - ScryptFile's mode must be either `rb` or `wb`. ScryptFile has two constants to help write portable code, `ScryptFile.MODE_READ` and `ScryptFile.MODE_WRITE`.
 
+```python
+import pyscrypt
+
+# Hash
+hashed = pyscrypt.hash(password = b"correct horse battery staple", 
+                       salt = b"seasalt", 
+                       N = 1024, 
+                       r = 1, 
+                       p = 1, 
+                       dkLen = 256)
+print hashed
+
+# Write a file
+with pyscrypt.ScryptFile('filename.scrypt', b'password', 1024, 1, 1) as f:
+    f.write(b"Hello world")
+
+# Read a file
+with pyscrypt.ScryptFile('filename.scrypt', b'password') as f:
+    data = f.read()
+    print(data)
+```
 
 FAQ
----
+===
 
 **Why is this so slow?**
 It is written in pure Python. It is not meant to be fast, more of a reference solution.
