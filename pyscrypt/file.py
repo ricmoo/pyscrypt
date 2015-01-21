@@ -55,28 +55,82 @@ from .hash import hash
 from . import aesctr
 
 
-MODE_READ  = 'r'
-MODE_WRITE = 'w'
-
 BLOCK_SIZE = 1024
+
+# Python 2
+if bytes == str:
+    MODE_READ  = 'r'
+    MODE_WRITE = 'w'
+
+    _allowed_read = ['r', 'rb']
+    _allowed_write = ['w', 'wb']
+
+    CHR0 = chr(0)
+
+    def check_bytes(byte_array):
+        return True
+
+    def get_byte(c):
+        'Converts a 1-byte string to a byte'
+        return ord(c)
+
+
+# Python 3
+else:
+    MODE_READ  = 'rb'
+    MODE_WRITE = 'wb'
+
+    _allowed_read = ['rb']
+    _allowed_write = ['wb']
+
+    CHR0 = bytes([0])
+
+    def check_bytes(byte_array):
+        return isinstance(byte_array, bytes)
+
+    def get_byte(c):
+        return c
+
+
+
+# Python 3 doesn't have xrange
+try:
+    xrange
+except NameError:
+    xrange = range
+
 
 class InvalidScryptFileFormat(Exception): pass
 
+# @TODO: In the future we should support the ability in Python 3 to open
+#        a ScryptFile with a mode of 'r' as long as the underlying fp
+#        is opened for 'rb', and then perform whatever text conversion
+#        normal files do when their mode is 'r'.
+
 class ScryptFile(object):
+
+    MODE_READ  = MODE_READ
+    MODE_WRITE = MODE_WRITE
 
     def __init__(self, fp, password, N = None, r = None, p = None, salt = None, mode = None):
         if mode is None and hasattr(fp, 'mode'):
             mode = fp.mode
         self._mode = mode
 
+        # This only matters to Python 3
+        if password is not None and not check_bytes(password):
+            raise ValueError('password must be a byte array')
+        if salt is not None and not check_bytes(salt):
+            raise ValueError('salt must be a byte array')
+
         # Make sure our parameters are sane and line up with the file's mode
-        if self._mode == MODE_WRITE:
+        if self._mode in _allowed_write:
             if N is None or r is None or p is None:
                 raise Exception("Must specify N, r and p for file open for writing")
             if salt is None:
                 salt = os.urandom(32)
             key = hash(password, salt, N, r, p, 64)
-        elif self._mode == MODE_READ:
+        elif self._mode in _allowed_read:
             if N is not None or r is not None or p is not None or salt is not None:
                 raise Exception("Cannot specify N, r, p or salt for file open for reading (values detected from file)")
             key = None
@@ -99,8 +153,8 @@ class ScryptFile(object):
         self._read_finished = False
 
         # Buffers for reading and writing
-        self._encrypted_buffer = ''
-        self._decrypted_buffer = ''
+        self._encrypted_buffer = b''
+        self._decrypted_buffer = b''
 
         # The cryptographic engine
         self._crypto = None
@@ -110,7 +164,7 @@ class ScryptFile(object):
 
     def _load_get_attr(self, name):
         'Return an internal attribute after ensuring the headers is loaded if necessary.'
-        if self._mode == MODE_READ and self._N is None:
+        if self._mode in _allowed_read and self._N is None:
             self._read_header()
         return getattr(self, name)
 
@@ -157,7 +211,7 @@ class ScryptFile(object):
         error. Some kinds of file objects (for example, opened by popen())
         may return an exit status upon closing.'''
 
-        if self._mode == MODE_WRITE and self._valid is None:
+        if self._mode in _allowed_write and self._valid is None:
             self._finalize_write()
         result = self._fp.close()
         self._closed = True
@@ -171,7 +225,7 @@ class ScryptFile(object):
         in a meaningful way (for example: StringIO will release underlying
         memory)'''
 
-        if self._mode == MODE_WRITE and self._valid is None:
+        if self._mode in _allowed_write and self._valid is None:
             self._finalize_write()
 
     @staticmethod
@@ -192,12 +246,12 @@ class ScryptFile(object):
         Return an empty string at EOF.'''
 
         if self.closed: raise ValueError('file closed')
-        if self._mode == MODE_WRITE:
+        if self._mode in _allowed_write:
             raise Exception('file opened for write only')
         if self._read_finished: return None
 
-        line = ''
-        while not line.endswith('\n') and not self._read_finished and (size is None or len(line) <= size):
+        line = b''
+        while not line.endswith(b'\n') and not self._read_finished and (size is None or len(line) <= size):
             line += self.read(1)
         return line
 
@@ -226,16 +280,16 @@ class ScryptFile(object):
                 raise InvalidScryptFileFormat("Incomplete header")
 
             # Magic number
-            if header[0:6] != 'scrypt':
+            if header[0:6] != b'scrypt':
                 raise InvalidScryptFileFormat('Invalid magic number").')
 
             # Version (we only support 0)
-            version = ord(header[6])
+            version = get_byte(header[6])
             if version != 0:
                 raise InvalidScryptFileFormat('Unsupported version (%d)' % version)
 
             # Scrypt parameters
-            self._N = 1 << ord(header[7])
+            self._N = 1 << get_byte(header[7])
             (self._r, self._p) = struct.unpack('>II', header[8:16])
             self._salt = header[16:48]
 
@@ -260,11 +314,11 @@ class ScryptFile(object):
 
             self._done_header = True
 
-        except InvalidScryptFileFormat, e:
+        except InvalidScryptFileFormat as e:
             self.close()
             raise e
 
-        except Exception, e:
+        except Exception as e:
             self.close()
             raise InvalidScryptFileFormat('Header error (%s)' % e)
 
@@ -282,7 +336,7 @@ class ScryptFile(object):
         may be returned, even if no size parameter was given.'''
 
         if self.closed: raise ValueError('File closed')
-        if self._mode == MODE_WRITE:
+        if self._mode in _allowed_write:
             raise Exception('File opened for write only')
         if not self._done_header:
             self._read_header()
@@ -341,7 +395,7 @@ class ScryptFile(object):
     def flush(self):
         "Flush the underlying file object's I/O buffer."
 
-        if self._mode == MODE_WRITE:
+        if self._mode in _allowed_write:
             self._fp.flush()
 
     def writelines(self, sequence):
@@ -355,7 +409,7 @@ class ScryptFile(object):
     def _write_header(self):
         'Writes the header to the underlying file object.'
 
-        header = 'scrypt' + chr(0) + struct.pack('>BII', math.log(self.N, 2), self.r, self.p) + self.salt
+        header = b'scrypt' + CHR0 + struct.pack('>BII', int(math.log(self.N, 2)), self.r, self.p) + self.salt
 
         # Add the header checksum to the header
         checksum = hashlib.sha256(header).digest()[:16]
@@ -400,7 +454,7 @@ class ScryptFile(object):
         the file on disk reflects the data written.'''
 
         if self.closed: raise ValueError('File closed')
-        if self._mode == MODE_READ:
+        if self._mode in _allowed_read:
             raise Exception('File opened for read only')
 
         if self._valid is not None:

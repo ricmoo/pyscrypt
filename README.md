@@ -4,6 +4,12 @@ pyscrypt
 A very simple, pure-Python implementation of the scrypt password-based key derivation function and scrypt file format libraries with no dependencies beyond standard Python libraries.
 
 
+Features
+--------
+
+- Pure Python (no external dependancies)
+- Python 2.x and 3.x support (see below for Python 3 details)
+
 
 API
 ---
@@ -64,10 +70,10 @@ print f.read()
 fp = file('filename.scrypt')
 f = pyscrypt.ScryptFile(fp, password = "password")
 for line in f:
-  print line
+    print line
 
 # Ensure the integrity of the file after completely read
-print f.valid
+print f.valid:
 ```
 
 
@@ -128,6 +134,15 @@ The scrypt algorithm is a CPU and memory intense algorithm, **by design**. For c
 **C-Wrapper** (See the FAQ below)
 
 2364 hashes per second
+
+
+Python 3
+--------
+
+This library is Python 3 friendly, however, there are a few things to note.
+
+- The parameters `password` and `salt` must be byte objects. e.g. `b"pass123"` instead of `"pass123"`.
+- ScryptFile's mode must be either `rb` or `wb`. ScryptFile has two constants to help write portable code, `ScryptFile.MODE_READ` and `ScryptFile.MODE_WRITE`.
 
 
 FAQ

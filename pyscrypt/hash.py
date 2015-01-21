@@ -23,9 +23,54 @@
 
 import hashlib
 import hmac
+import struct
 
-from .pbkdf2 import pbkdf2
 
+# Python 2
+if bytes == str:
+    def check_bytes(byte_array):
+        return True
+
+    def get_byte(c):
+        'Converts a 1-byte string to a byte'
+        return ord(c)
+
+    def chars_to_bytes(array):
+        'Converts an array of integers to an array of bytes.'
+        return ''.join(chr(c) for c in array)
+
+# Python 3
+else:
+    xrange = range
+
+    def check_bytes(byte_array):
+        return isinstance(byte_array, bytes)
+
+    def get_byte(c):
+        return c
+
+    def chars_to_bytes(array):
+        return bytes(array)
+
+
+def pbkdf2_single(password, salt, key_length, prf):
+    '''Returns the result of the Password-Based Key Derivation Function 2 with
+       a single iteration (i.e. count = 1).
+
+       prf - a psuedorandom function
+
+       See http://en.wikipedia.org/wiki/PBKDF2
+    '''
+
+    block_number = 0
+    result = b''
+
+    # The iterations
+    while len(result) < key_length:
+        block_number += 1
+        result += prf(password, salt + struct.pack('>L', block_number))
+
+    return result[:key_length]
 
 
 def salsa20_8(B):
@@ -121,6 +166,7 @@ def salsa20_8(B):
     for i in xrange(0, 16):
         B[i] = (B[i] + x[i]) & 0xffffffff
 
+
 def blockmix_salsa8(BY, Yi, r):
     '''Blockmix; Used by SMix.'''
 
@@ -178,6 +224,13 @@ def hash(password, salt, N, r, p, dkLen):
          N, r, p must be positive
      """
 
+    # This only matters to Python 3
+    if not check_bytes(password):
+        raise ValueError('password must be a byte array')
+
+    if not check_bytes(salt):
+        raise ValueError('salt must be a byte array')
+
     # Scrypt implementation. Significant thanks to https://github.com/wg/scrypt
     if N < 2 or (N & (N - 1)): raise ValueError('Scrypt N must be a power of 2 greater than 1')
 
@@ -185,7 +238,7 @@ def hash(password, salt, N, r, p, dkLen):
     prf = lambda k, m: hmac.new(key = k, msg = m, digestmod = hashlib.sha256).digest()
 
     # convert into integers
-    B  = [ ord(c) for c in pbkdf2(password, salt, 1, p * 128 * r, prf) ]
+    B  = [ get_byte(c) for c in pbkdf2_single(password, salt, p * 128 * r, prf) ]
     B = [ ((B[i + 3] << 24) | (B[i + 2] << 16) | (B[i + 1] << 8) | B[i + 0]) for i in xrange(0, len(B), 4)]
 
     XY = [ 0 ] * (64 * r)
@@ -202,4 +255,4 @@ def hash(password, salt, N, r, p, dkLen):
         Bc.append((i >> 16) & 0xff)
         Bc.append((i >> 24) & 0xff)
 
-    return pbkdf2(password, ''.join(chr(c) for c in Bc), 1, dkLen, prf)
+    return pbkdf2_single(password, chars_to_bytes(Bc), dkLen, prf)

@@ -23,8 +23,37 @@
 import copy
 import struct
 
+
+# Python 2
+if bytes == str:
+
+    def get_byte(c):
+        'Converts a 1-byte string to a byte'
+        return ord(c)
+
+    def chars_to_bytes(array):
+        'Converts an array of integers to an array of bytes.'
+        return ''.join(chr(c) for c in array)
+
+# Python 3
+else:
+    def get_byte(c):
+        return c
+
+    def chars_to_bytes(array):
+        return bytes(array)
+
+
+# Python 3 doesn't have xrange
+try:
+    xrange
+except NameError:
+    xrange = range
+
+
 def compact_word(word):
     return (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
+
 
 # Based *largely* on the Rijndael implementation
 # See: http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
@@ -56,14 +85,14 @@ class AES(object):
         self._Ke = [[0] * 4 for i in xrange(rounds + 1)]
 
         round_key_count = (rounds + 1) * 4
-        KC = len(key) / 4
+        KC = int(len(key) / 4)
 
         # Convert the key into ints
         tk = [ struct.unpack('>i', key[i:i + 4])[0] for i in xrange(0, len(key), 4) ]
 
         # Copy values into round key arrays
         for i in xrange(0, KC):
-            self._Ke[i / 4][i % 4] = tk[i]
+            self._Ke[i // 4][i % 4] = tk[i]
 
         # Key expansion (fips-197 section 5.2)
         rconpointer = 0
@@ -84,22 +113,22 @@ class AES(object):
 
             # Key expansion for 256-bit keys is "slightly different" (fips-197)
             else:
-                for i in xrange(1, KC / 2):
+                for i in xrange(1, KC // 2):
                     tk[i] ^= tk[i - 1]
-                tt = tk[KC / 2 - 1]
+                tt = tk[KC // 2 - 1]
 
-                tk[KC / 2] ^= (self.S[ tt        & 0xFF]        ^
-                              (self.S[(tt >>  8) & 0xFF] <<  8) ^
-                              (self.S[(tt >> 16) & 0xFF] << 16) ^
-                              (self.S[(tt >> 24) & 0xFF] << 24))
+                tk[KC // 2] ^= (self.S[ tt        & 0xFF]        ^
+                               (self.S[(tt >>  8) & 0xFF] <<  8) ^
+                               (self.S[(tt >> 16) & 0xFF] << 16) ^
+                               (self.S[(tt >> 24) & 0xFF] << 24))
 
-                for i in xrange(KC / 2 + 1, KC):
+                for i in xrange(KC // 2 + 1, KC):
                     tk[i] ^= tk[i-1]
 
             # Copy values into round key arrays
             j = 0
             while j < KC and t < round_key_count:
-                self._Ke[t / 4][t % 4] = tk[j]
+                self._Ke[t // 4][t % 4] = tk[j]
                 j += 1
                 t += 1
 
@@ -168,9 +197,9 @@ class AESCounterModeOfOperation(object):
             else:
                 raise ValueError('counter value would overflow, compromising security.')
 
-        encrypted = [ (ord(p) ^ c) for (p, c) in zip(plaintext, self._remaining_counter) ]
+        encrypted = [ (get_byte(p) ^ c) for (p, c) in zip(plaintext, self._remaining_counter) ]
 
-        return "".join(chr(c) for c in encrypted)
+        return chars_to_bytes(encrypted)
 
     def decrypt(self, crypttext):
         # AES-CTR is symetric
@@ -200,11 +229,11 @@ if __name__ == '__main__':
                     enc = aes.encrypt(plaintext)
 
                     result = {True: "pass", False: "fail"}[kenc == enc]
-                    print "Test Encrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
+                    print("Test Encrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result))
 
                     aes = AESCounterModeOfOperation(key)
                     result = {True: "pass", False: "fail"}[plaintext == aes.decrypt(kenc)]
-                    print "Test Decrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result)
+                    print("Test Decrypt: key_size=%d text_length=%d trial=%d result=%s" % (key_size, text_length, i, result))
 
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
