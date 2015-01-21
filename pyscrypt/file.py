@@ -74,6 +74,8 @@ if bytes == str:
         'Converts a 1-byte string to a byte'
         return ord(c)
 
+    def is_string(o):
+        return isinstance(o, (unicode, str))
 
 # Python 3
 else:
@@ -91,6 +93,8 @@ else:
     def get_byte(c):
         return c
 
+    def is_string(o):
+        return isinstance(o, (bytes, str))
 
 
 # Python 3 doesn't have xrange
@@ -113,8 +117,20 @@ class ScryptFile(object):
     MODE_WRITE = MODE_WRITE
 
     def __init__(self, fp, password, N = None, r = None, p = None, salt = None, mode = None):
-        if mode is None and hasattr(fp, 'mode'):
-            mode = fp.mode
+
+        # No explicit mode...
+        if mode is None:
+
+            # Does the file have a mode?
+            if hasattr(fp, 'mode'):
+                mode = fp.mode
+
+            # Otherwise, we can figure out what the valid mode is
+            elif N is not None or r is not None or p is not None or salt is not None:
+                mode = ScryptFile.MODE_WRITE
+            else:
+                mode = ScryptFile.MODE_READ
+
         self._mode = mode
 
         # This only matters to Python 3
@@ -147,7 +163,14 @@ class ScryptFile(object):
         self._p = p
 
         # File state
-        self._fp = fp
+        if hasattr(fp, 'close'):
+            self._filename = None
+            self._fp = fp
+        elif is_string(fp):
+            self._filename = fp
+            self._fp = open(fp, self._mode)
+        else:
+            raise ValueError('fp must be a file-like object or a filename')
         self._closed = False
         self._done_header = False
         self._read_finished = False
@@ -190,6 +213,16 @@ class ScryptFile(object):
     #def _set_softspace(self, value):
     #    self._fp.softspace = value
     #softspace = property(lambda s: s._fp.softspace, _set_softspace)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        if self._filename is not None:
+            self.close()
+        else:
+            self.finalize()
+        return False
 
     def fileno(self):
         '''Integer "file descriptor" for the underlying file object.
@@ -349,7 +382,7 @@ class ScryptFile(object):
             else:
                 decrypted = self._decrypted_buffer[:size]
             self._decrypted_buffer = self._decrypted[len(decrypted):]
-            return decypted
+            return decrypted
 
         # Read everything in one chunk
         if size is None or size < 0:

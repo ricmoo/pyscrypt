@@ -54,6 +54,14 @@ for length in (10, 100, 1000):
     file(path_text, ScryptFile.MODE_WRITE).write(text)
     print("Created %s and %s. Check with tarsnap." % (path_scrypt, path_text))
 
+text = b"Hello world" * 100
+with ScryptFile('/tmp/test-with.scrypt', b'password', 1024, 1, 1) as f:
+    f.write(text)
+with ScryptFile('/tmp/test-with.scrypt', b'password') as f:
+    new_text = f.read()
+result = {True: "pass", False: "fail"}[text == new_text]
+print("Test With filename: result=%s" % result)
+
 # Open some files created with the tarsnap utility and read them
 for filename in ('test1', 'test2'):
     path_scrypt = os.path.join('tests/', filename + '.scrypt')
@@ -84,3 +92,4 @@ for filename in ('test1', 'test2'):
 
         result = {True: "pass", False: "fail"}[content_scrypt == content_text]
         print("Test Decrypt: dec(%r) == %r result=%s valid=%s" % (path_scrypt, path_text, result, sf.valid))
+
