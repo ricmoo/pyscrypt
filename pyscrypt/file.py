@@ -145,6 +145,8 @@ class ScryptFile(object):
                 raise Exception("Must specify N, r and p for file open for writing")
             if salt is None:
                 salt = os.urandom(32)
+            elif len(salt) != 32:
+                raise ValueError('The salt must be 32 bytes in length')
             key = hash(password, salt, N, r, p, 64)
         elif self._mode in _allowed_read:
             if N is not None or r is not None or p is not None or salt is not None:
