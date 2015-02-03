@@ -35,6 +35,6 @@
 from .file import InvalidScryptFileFormat, ScryptFile
 from .hash import hash
 
-VERSION = [1, 6, 1]
+VERSION = [1, 6, 2]
 
 __all__ = ['hash', 'InvalidScryptFileFormat', 'ScryptFile']

@@ -8,7 +8,7 @@ dependencies beyond standard Python libraries. See README.md for API
 reference and details.'''
 
 setup(name = 'pyscrypt',
-      version = '1.6.1',
+      version = '1.6.2',
       description = 'Pure-Python Implementation of the scrypt password-based key derivation function and scrypt file format library',
       long_description = LONG_DESCRIPTION,
       author = 'Richard Moore',
@@ -18,6 +18,9 @@ setup(name = 'pyscrypt',
       classifiers = [
           'Topic :: Security :: Cryptography',
           'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 3',
       ],
       license = "License :: OSI Approved :: MIT License",
      )
