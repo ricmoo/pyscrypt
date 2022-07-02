@@ -167,7 +167,7 @@ hashed = pyscrypt.hash(password = b"correct horse battery staple",
                        r = 1, 
                        p = 1, 
                        dkLen = 256)
-print hashed
+print(hashed)
 
 # Write a file
 with pyscrypt.ScryptFile('filename.scrypt', b'password', 1024, 1, 1) as f:
